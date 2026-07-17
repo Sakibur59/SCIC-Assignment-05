@@ -3,22 +3,30 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const {
-  uploadResume,
   getResumes,
   getResume,
-  updateResume,
   deleteResume,
   analyzeResume,
+  uploadResumeWithGemini,
+  uploadResume,
+  updateResume,
+  matchJob,
 } = require('../controllers/resumeController');
 
 // All routes are protected
 router.use(protect);
 
-// Upload and get all
-router.post('/', upload.single('file'), uploadResume);
-router.get('/', getResumes);
+// Upload and analyze with Gemini
+router.post('/upload-ai', upload.single('file'), uploadResumeWithGemini);
 
-// Analyze
+// Regular upload
+router.post('/', upload.single('file'), uploadResume);
+
+// Get all resumes
+router.get('/', getResumes);
+router.post('/match-job', matchJob);
+
+// Analyze with Gemini
 router.post('/analyze', analyzeResume);
 
 // Single resume operations

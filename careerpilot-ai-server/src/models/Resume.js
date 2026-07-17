@@ -29,6 +29,7 @@ const Resume = {
       portfolio: data.portfolio || '',
       linkedin: data.linkedin || '',
       github: data.github || '',
+      extractedText: data.extractedText || '',
       analysis: {
         score: null,
         suggestions: [],
@@ -102,10 +103,13 @@ const Resume = {
       {
         $set: {
           'analysis': {
-            ...analysis,
-            analyzedAt: new Date()
+            score: analysis.overallScore || analysis.score || 0,
+            suggestions: analysis.suggestions || [],
+            keywords: analysis.keywords || [],
+            atsScore: analysis.atsScore || 0,
+            analyzedAt: new Date(),
           },
-          updatedAt: new Date()
+          updatedAt: new Date(),
         }
       }
     );

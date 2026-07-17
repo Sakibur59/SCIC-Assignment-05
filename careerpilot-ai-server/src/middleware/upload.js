@@ -6,6 +6,7 @@ const fs = require('fs');
 const uploadDir = process.env.UPLOAD_DIR || './uploads/resumes';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('✅ Upload directory created:', uploadDir);
 }
 
 // Configure storage
@@ -15,7 +16,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, 'resume-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
