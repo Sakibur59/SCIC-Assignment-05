@@ -20,6 +20,7 @@ const Navbar = () => {
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Jobs', href: '/jobs' },
+    { name: 'AI Document', href: '/ai-document' }, 
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Resume', href: '/resume' },
     { name: 'Saved Jobs', href: '/saved-jobs' },

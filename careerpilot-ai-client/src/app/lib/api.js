@@ -15,12 +15,8 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const session = await getSession();
-    if (session?.user?.id) {
-      // If using JWT from backend
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    if (session?.user?.token) {
+      config.headers.Authorization = `Bearer ${session.user.token}`;
     }
     return config;
   },
@@ -71,6 +67,7 @@ export const resumeAPI = {
   update: (id, data) => api.put(`/resume/${id}`, data),
   delete: (id) => api.delete(`/resume/${id}`),
   analyze: (resumeId) => api.post('/resume/analyze', { resumeId }),
+   matchJob: (resumeId, jobText) => api.post('/resume/match-job', { resumeId, jobText }),
 };
 
 // Saved Jobs APIs
@@ -81,4 +78,6 @@ export const savedJobAPI = {
   delete: (id) => api.delete(`/saved-jobs/${id}`),
 };
 
+
 export default api;
+
