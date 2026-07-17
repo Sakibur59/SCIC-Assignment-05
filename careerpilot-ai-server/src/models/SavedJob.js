@@ -18,7 +18,7 @@ const SavedJob = {
     const db = getDb();
     const savedJob = {
       userId: new ObjectId(data.userId),
-      jobId: data.jobId,
+      jobId: data.jobId.toString(),
       jobData: {
         title: data.jobData.title,
         company: data.jobData.company,
@@ -57,7 +57,9 @@ const SavedJob = {
   // Find saved job by id
   async findById(id) {
     const db = getDb();
-    return await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+    return await db.collection(COLLECTION).findOne({ 
+      _id: new ObjectId(id) 
+    });
   },
 
   // Find saved job by user and jobId
@@ -65,7 +67,7 @@ const SavedJob = {
     const db = getDb();
     return await db.collection(COLLECTION).findOne({
       userId: new ObjectId(userId),
-      jobId: jobId,
+      jobId: jobId.toString(),
     });
   },
 
@@ -86,7 +88,9 @@ const SavedJob = {
   // Delete saved job
   async delete(id) {
     const db = getDb();
-    const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+    const result = await db.collection(COLLECTION).deleteOne({ 
+      _id: new ObjectId(id) 
+    });
     return result.deletedCount > 0;
   },
 };
