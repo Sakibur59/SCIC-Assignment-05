@@ -1,20 +1,29 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { FaRobot, FaUserCircle, FaSignInAlt, FaBars, FaTimes } from 'react-icons/fa'
+import { useState } from 'react';
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { FaRobot, FaUserCircle, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    localStorage.removeItem('token');
+    router.push('/');
+  };
 
   const navItems = [
     { name: 'Home', href: '/' },
-    { name: 'Explore Jobs', href: '/jobs' },
-    { name: 'Companies', href: '/companies' },
-    { name: 'AI Tools', href: '/ai-tools' },
-    { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' },
-  ]
+    { name: 'Jobs', href: '/jobs' },
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Resume', href: '/resume' },
+    { name: 'Saved Jobs', href: '/saved-jobs' },
+  ];
 
   return (
     <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -41,22 +50,30 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Right Side - Dashboard & Auth */}
+          {/* Right Side - User Info */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors flex items-center gap-1"
-            >
-              <FaUserCircle className="text-lg" />
-              Dashboard
-            </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-full transition shadow-sm flex items-center gap-2"
-            >
-              <FaSignInAlt />
-              Login / Register
-            </Link>
+            {session ? (
+              <>
+                <span className="text-sm text-gray-700">
+                  Welcome, {session.user?.name || 'User'}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-red-600 hover:text-red-700 transition flex items-center gap-1"
+                >
+                  <FaSignOutAlt />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-full transition shadow-sm flex items-center gap-2"
+              >
+                <FaUserCircle />
+                Login / Register
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -82,14 +99,14 @@ const Navbar = () => {
                   {item.name}
                 </Link>
               ))}
-              <div className="pt-3 border-t border-gray-200 flex flex-col space-y-3">
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors px-2 py-1 flex items-center gap-2"
-                  onClick={() => setIsOpen(false)}
+              {session ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-red-600 hover:text-red-700 transition px-2 py-1 text-left flex items-center gap-2"
                 >
-                  <FaUserCircle /> Dashboard
-                </Link>
+                  <FaSignOutAlt /> Logout
+                </button>
+              ) : (
                 <Link
                   href="/login"
                   className="text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-full transition text-center"
@@ -97,13 +114,13 @@ const Navbar = () => {
                 >
                   Login / Register
                 </Link>
-              </div>
+              )}
             </div>
           </div>
         )}
       </div>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;
