@@ -7,7 +7,7 @@ const checkSavedJob = async (req, res) => {
   try {
     const { jobId } = req.query;
 
-    console.log('🔍 Checking saved job:', { jobId, userId: req.user._id });
+
 
     if (!jobId) {
       return res.status(400).json({ message: 'Job ID is required' });
@@ -27,9 +27,7 @@ const checkSavedJob = async (req, res) => {
 // @access  Private
 const saveJob = async (req, res) => {
   try {
-    console.log('📝 Save job request received');
-    console.log('👤 User:', req.user._id);
-    console.log('📦 Body:', req.body);
+
 
     const { jobId, jobData, notes } = req.body;
 
@@ -54,7 +52,7 @@ const saveJob = async (req, res) => {
       notes: notes || '',
     });
 
-    console.log('✅ Job saved successfully:', savedJob._id);
+
 
     res.status(201).json({
       message: 'Job saved successfully',
@@ -117,9 +115,7 @@ const updateSavedJob = async (req, res) => {
 // @access  Private
 const deleteSavedJob = async (req, res) => {
   try {
-    console.log('🗑️ Delete saved job request received');
-    console.log('👤 User:', req.user._id);
-    console.log('📦 Job ID:', req.params.jobId);
+
 
     const savedJob = await SavedJob.findByUserAndJobId(req.user._id, req.params.jobId);
     
@@ -131,7 +127,7 @@ const deleteSavedJob = async (req, res) => {
 
     await SavedJob.delete(savedJob._id);
 
-    console.log('✅ Job removed successfully');
+
 
     res.json({ 
       message: 'Job removed from saved list' 
