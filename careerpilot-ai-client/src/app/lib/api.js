@@ -70,6 +70,10 @@ export const resumeAPI = {
    matchJob: (resumeId, jobText) => api.post('/resume/match-job', { resumeId, jobText }),
 };
 
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+};
+
 // Saved Jobs APIs
 export const savedJobAPI = {
   getAll: () => api.get('/saved-jobs'),
