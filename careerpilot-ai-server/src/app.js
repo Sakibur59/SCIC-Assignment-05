@@ -6,6 +6,7 @@ const { connectDB } = require('./config/database');
 const User = require('./models/User');
 const Resume = require('./models/Resume');
 const SavedJob = require('./models/SavedJob');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -31,6 +32,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/saved-jobs', savedJobRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
