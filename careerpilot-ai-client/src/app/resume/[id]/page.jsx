@@ -104,7 +104,7 @@ export default function ResumeDetailPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/resume/${resumeId}/report`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resume/${resumeId}/report`, {
         headers: {
           Authorization: `Bearer ${session?.user?.token}`,
         },

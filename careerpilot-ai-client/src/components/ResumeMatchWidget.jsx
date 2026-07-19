@@ -92,7 +92,7 @@ export default function ResumeMatchWidget({ job }) {
       {opened && !loadingResumes && resumes.length === 0 && (
         <p className="text-sm text-gray-600">
           You haven't uploaded a resume yet.{' '}
-          <a href="/ai-document" className="text-primary-600 font-medium hover:underline">
+          <a href="/resume" className="text-primary-600 font-medium hover:underline">
             Upload one first
           </a>{' '}
           to check your match.

@@ -77,7 +77,7 @@ export default function AIDocumentPage() {
       formData.append("title", selectedFile.name.replace(".pdf", ""));
 
       const uploadResponse = await fetch(
-        "http://localhost:5000/api/resume/upload-ai",
+        `${process.env.NEXT_PUBLIC_API_URL}/resume/upload-ai`,
         {
           method: "POST",
           headers: {
@@ -104,7 +104,7 @@ export default function AIDocumentPage() {
       } else if (data.resume?._id) {
         // If analysis is not included, fetch it
         const analyzeResponse = await fetch(
-          "http://localhost:5000/api/resume/analyze",
+          `${process.env.NEXT_PUBLIC_API_URL}/resume/analyze`,
           {
             method: "POST",
             headers: {
@@ -192,7 +192,7 @@ const handleDownloadReport = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:5000/api/resume/${resumeId}/report`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resume/${resumeId}/report`, {
       headers: {
         Authorization: `Bearer ${session?.user?.token}`,
       },
