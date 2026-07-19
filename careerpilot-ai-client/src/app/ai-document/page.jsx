@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -24,6 +24,7 @@ import {
   FaRocket,
   FaStarHalf,
   FaRegStar,
+  FaTimes,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -38,22 +39,21 @@ export default function AIDocumentPage() {
   const [resumeId, setResumeId] = useState(null);
 
   // Redirect if not logged in
-  if (status === "unauthenticated") {
-    router.push("/login");
-    return null;
-  }
+    useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // Validate file type
     if (selectedFile.type !== "application/pdf") {
       toast.error("Please upload a PDF file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
       return;
@@ -63,75 +63,74 @@ export default function AIDocumentPage() {
     setUploadedFile(selectedFile);
     setAnalysis(null);
 
-    // Auto-upload and analyze
     await handleUploadAndAnalyze(selectedFile);
   };
 
-  const handleUploadAndAnalyze = async (selectedFile) => {
-    setUploading(true);
-    setAnalyzing(true);
+ const handleUploadAndAnalyze = async (selectedFile) => {
+  setUploading(true);
+  setAnalyzing(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("title", selectedFile.name.replace(".pdf", ""));
+  try {
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("title", selectedFile.name.replace(".pdf", ""));
 
-      const uploadResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/resume/upload-ai`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session?.user?.token}`,
-          },
-          body: formData,
+    const uploadResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/resume/upload-ai`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.user?.token}`,
         },
-      );
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.message || "Upload failed");
+        body: formData,
       }
+    );
 
-      const data = await uploadResponse.json();
-      if (data.resume?._id) {
-        setResumeId(data.resume._id);
-      }
-      toast.success("Resume uploaded and analyzed by Gemini AI!");
+    const data = await uploadResponse.json();
 
-      // Set analysis data
-      if (data.analysis) {
-        setAnalysis(data.analysis);
-      } else if (data.resume?._id) {
-        // If analysis is not included, fetch it
-        const analyzeResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/resume/analyze`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.user?.token}`,
-            },
-            body: JSON.stringify({ resumeId: data.resume._id }),
-          },
-        );
-        const analyzeData = await analyzeResponse.json();
-        setAnalysis(analyzeData.analysis);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.message || "Something went wrong");
-    } finally {
+    // 👇 Check if error from backend
+    if (data.error) {
+      toast.error(data.message || "Analysis failed");
       setUploading(false);
       setAnalyzing(false);
+      return;
     }
-  };
+
+    if (!uploadResponse.ok) {
+      throw new Error(data.message || "Upload failed");
+    }
+
+    if (data.resume?._id) {
+      setResumeId(data.resume._id);
+    }
+
+    // 👇 If analysis is null but resume uploaded
+    if (!data.analysis) {
+      toast.warning("Resume uploaded but analysis failed. You can try again later.");
+      setUploading(false);
+      setAnalyzing(false);
+      return;
+    }
+
+    toast.success("Resume uploaded and analyzed by Gemini AI!");
+    setAnalysis(data.analysis);
+
+  } catch (error) {
+    console.error("Error:", error);
+    toast.error(error.message || "Something went wrong");
+  } finally {
+    setUploading(false);
+    setAnalyzing(false);
+  }
+};
+
   // Simulated AI Analysis (for demo without backend)
   const handleSimulateAnalysis = () => {
     setAnalyzing(true);
     setTimeout(() => {
       setAnalysis({
         summary:
-          "Senior Full Stack Developer with 5+ years of experience in React, Node.js, and cloud technologies. Strong background in building scalable web applications and leading technical teams.",
+          "Senior Full Stack Developer with 5+ years of experience in React, Node.js, and cloud technologies.",
         skills: [
           { name: "React", level: 90 },
           { name: "Node.js", level: 85 },
@@ -185,37 +184,43 @@ export default function AIDocumentPage() {
     }, 3000);
   };
 
-const handleDownloadReport = async () => {
-  if (!resumeId) {
-    toast.error('No resume to generate a report for');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resume/${resumeId}/report`, {
-      headers: {
-        Authorization: `Bearer ${session?.user?.token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'Failed to generate report');
+  const handleDownloadReport = async () => {
+    if (!resumeId) {
+      toast.error("No resume to generate a report for");
+      return;
     }
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Resume_Analysis_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Report downloaded!');
-  } catch (error) {
-    console.error('Download report error:', error);
-    toast.error(error.message || 'Could not download report');
-  }
-};
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/resume/${resumeId}/report`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.user?.token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to generate report");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Resume_Analysis_Report_${new Date()
+        .toISOString()
+        .split("T")[0]}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded!");
+    } catch (error) {
+      console.error("Download report error:", error);
+      toast.error(error.message || "Could not download report");
+    }
+  };
+
   // Loading state
   if (status === "loading") {
     return (
@@ -290,7 +295,7 @@ const handleDownloadReport = async () => {
         />
       </div>
 
-      {/* Upload Section */}
+      {/* ===== UPLOAD SECTION ===== */}
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>

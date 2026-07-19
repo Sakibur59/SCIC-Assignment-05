@@ -68,7 +68,7 @@ const uploadResumeWithGemini = async (req, res) => {
       return res.status(400).json({ message: "Please provide a title" });
     }
 
-    // Extract text from PDF - with fallback
+    // Extract text from PDF
     const filePath = path.join(
       process.cwd(),
       "uploads",
@@ -84,13 +84,11 @@ const uploadResumeWithGemini = async (req, res) => {
       console.log("📄 Extracted text length:", extractedText.length);
     } catch (error) {
       console.error("❌ PDF extraction failed:", error);
-      // Don't fail, use file info instead
-      extractedText = `Resume: ${title}. File: ${req.file.filename}. Please ensure PDF has readable text.`;
+      extractedText = `Resume: ${title}. File: ${req.file.filename}.`;
     }
 
-    // If text is too short, add more context
     if (extractedText.length < 50) {
-      extractedText = `Resume: ${title}. File: ${req.file.filename}. This appears to be a scanned image or non-text PDF.`;
+      extractedText = `Resume: ${title}. File: ${req.file.filename}.`;
     }
 
     // Create resume
@@ -117,17 +115,24 @@ const uploadResumeWithGemini = async (req, res) => {
       console.log("✅ Gemini analysis completed");
     } catch (error) {
       console.error("❌ Gemini analysis failed:", error);
-      // Use fallback analysis
-      analysis = {
-        summary: `Resume: ${title}. Analysis could not be completed.`,
-        skills: [],
-        experience: [],
-        education: [],
-        missingKeywords: ["Please upload text-based PDF"],
-        atsScore: 50,
-        suggestions: ["Please upload a text-based PDF for better analysis"],
-        overallScore: 50,
-      };
+      
+      // 👇 Return error response with proper message
+      const errorMessage = error.message || "Analysis failed";
+      let userMessage = "AI analysis failed. Please try again.";
+      
+      if (errorMessage.includes("quota") || errorMessage.includes("429")) {
+        userMessage = "🚨 Gemini API quota exceeded. Please try again after 24 hours.";
+      } else if (errorMessage.includes("503")) {
+        userMessage = "⚠️ AI service is busy. Please try again in a few minutes.";
+      }
+      
+      // Save resume without analysis
+      return res.status(429).json({
+        message: userMessage,
+        resume: resume,
+        analysis: null,
+        error: true
+      });
     }
 
     // Save analysis
