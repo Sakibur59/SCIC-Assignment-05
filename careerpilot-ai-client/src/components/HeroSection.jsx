@@ -24,6 +24,13 @@ const HeroSection = () => {
     router.push('/jobs');
   };
 
+  const handleUploadResume = () => {
+    if (session) {
+      router.push('/resume');
+    } else {
+      router.push('/login');
+    }
+  };
 
   const handleAIAnalysis = () => {
     if (session) {
@@ -96,6 +103,15 @@ const HeroSection = () => {
                   <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-gray-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+
+              <button
+                onClick={handleUploadResume}
+                className="group px-8 py-3.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-semibold rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+              >
+                <FaUpload />
+                Upload Resume
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">Free</span>
               </button>
 
               <button
