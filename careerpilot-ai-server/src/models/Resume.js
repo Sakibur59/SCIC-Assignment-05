@@ -96,16 +96,22 @@ const Resume = {
   },
 
   // Update analysis
-  async updateAnalysis(id, analysis) {
+ async updateAnalysis(id, analysis) {
     const db = getDb();
     const result = await db.collection(COLLECTION).updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
           'analysis': {
-            score: analysis.overallScore || analysis.score || 0,
+            score: analysis.overallScore ?? analysis.score ?? 0,
+            overallScore: analysis.overallScore ?? analysis.score ?? 0,
+            summary: analysis.summary || '',
+            skills: analysis.skills || [],
+            experience: analysis.experience || [],
+            education: analysis.education || [],
             suggestions: analysis.suggestions || [],
             keywords: analysis.keywords || [],
+            missingKeywords: analysis.missingKeywords || [],
             atsScore: analysis.atsScore || 0,
             analyzedAt: new Date(),
           },

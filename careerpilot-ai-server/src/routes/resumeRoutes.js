@@ -11,6 +11,7 @@ const {
   uploadResume,
   updateResume,
   matchJob,
+  downloadReport,
 } = require('../controllers/resumeController');
 
 // All routes are protected
@@ -30,6 +31,7 @@ router.post('/match-job', matchJob);
 router.post('/analyze', analyzeResume);
 
 // Single resume operations
+router.get('/:id/report', downloadReport);
 router.get('/:id', getResume);
 router.put('/:id', updateResume);
 router.delete('/:id', deleteResume);

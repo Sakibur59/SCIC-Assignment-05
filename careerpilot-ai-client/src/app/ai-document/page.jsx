@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { 
-  FaUpload, 
-  FaFilePdf, 
-  FaSpinner, 
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  FaUpload,
+  FaFilePdf,
+  FaSpinner,
   FaCheckCircle,
   FaDownload,
   FaRobot,
@@ -23,9 +23,9 @@ import {
   FaBrain,
   FaRocket,
   FaStarHalf,
-  FaRegStar
-} from 'react-icons/fa';
-import toast from 'react-hot-toast';
+  FaRegStar,
+} from "react-icons/fa";
+import toast from "react-hot-toast";
 
 export default function AIDocumentPage() {
   const { data: session, status } = useSession();
@@ -35,10 +35,11 @@ export default function AIDocumentPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [resumeId, setResumeId] = useState(null);
 
   // Redirect if not logged in
-  if (status === 'unauthenticated') {
-    router.push('/login');
+  if (status === "unauthenticated") {
+    router.push("/login");
     return null;
   }
 
@@ -47,179 +48,176 @@ export default function AIDocumentPage() {
     if (!selectedFile) return;
 
     // Validate file type
-    if (selectedFile.type !== 'application/pdf') {
-      toast.error('Please upload a PDF file');
+    if (selectedFile.type !== "application/pdf") {
+      toast.error("Please upload a PDF file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+      toast.error("File size must be less than 5MB");
       return;
     }
 
     setFile(selectedFile);
     setUploadedFile(selectedFile);
     setAnalysis(null);
-    
+
     // Auto-upload and analyze
     await handleUploadAndAnalyze(selectedFile);
   };
 
-const handleUploadAndAnalyze = async (selectedFile) => {
-  setUploading(true);
-  setAnalyzing(true);
+  const handleUploadAndAnalyze = async (selectedFile) => {
+    setUploading(true);
+    setAnalyzing(true);
 
-  try {
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('title', selectedFile.name.replace('.pdf', ''));
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("title", selectedFile.name.replace(".pdf", ""));
 
-    const uploadResponse = await fetch('http://localhost:5000/api/resume/upload-ai', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session?.user?.token}`,
-      },
-      body: formData,
-    });
-
-    if (!uploadResponse.ok) {
-      const error = await uploadResponse.json();
-      throw new Error(error.message || 'Upload failed');
-    }
-
-    const data = await uploadResponse.json();
-    
-    toast.success('Resume uploaded and analyzed by Gemini AI!');
-    
-    // Set analysis data
-    if (data.analysis) {
-      setAnalysis(data.analysis);
-    } else if (data.resume?._id) {
-      // If analysis is not included, fetch it
-      const analyzeResponse = await fetch('http://localhost:5000/api/resume/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.user?.token}`,
+      const uploadResponse = await fetch(
+        "http://localhost:5000/api/resume/upload-ai",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.user?.token}`,
+          },
+          body: formData,
         },
-        body: JSON.stringify({ resumeId: data.resume._id }),
-      });
-      const analyzeData = await analyzeResponse.json();
-      setAnalysis(analyzeData.analysis);
-    }
+      );
 
-  } catch (error) {
-    console.error('Error:', error);
-    toast.error(error.message || 'Something went wrong');
-  } finally {
-    setUploading(false);
-    setAnalyzing(false);
-  }
-};
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json();
+        throw new Error(error.message || "Upload failed");
+      }
+
+      const data = await uploadResponse.json();
+      if (data.resume?._id) {
+        setResumeId(data.resume._id);
+      }
+      toast.success("Resume uploaded and analyzed by Gemini AI!");
+
+      // Set analysis data
+      if (data.analysis) {
+        setAnalysis(data.analysis);
+      } else if (data.resume?._id) {
+        // If analysis is not included, fetch it
+        const analyzeResponse = await fetch(
+          "http://localhost:5000/api/resume/analyze",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.user?.token}`,
+            },
+            body: JSON.stringify({ resumeId: data.resume._id }),
+          },
+        );
+        const analyzeData = await analyzeResponse.json();
+        setAnalysis(analyzeData.analysis);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setUploading(false);
+      setAnalyzing(false);
+    }
+  };
   // Simulated AI Analysis (for demo without backend)
   const handleSimulateAnalysis = () => {
     setAnalyzing(true);
     setTimeout(() => {
       setAnalysis({
-        summary: 'Senior Full Stack Developer with 5+ years of experience in React, Node.js, and cloud technologies. Strong background in building scalable web applications and leading technical teams.',
+        summary:
+          "Senior Full Stack Developer with 5+ years of experience in React, Node.js, and cloud technologies. Strong background in building scalable web applications and leading technical teams.",
         skills: [
-          { name: 'React', level: 90 },
-          { name: 'Node.js', level: 85 },
-          { name: 'TypeScript', level: 80 },
-          { name: 'AWS', level: 75 },
-          { name: 'MongoDB', level: 70 },
-          { name: 'GraphQL', level: 65 },
+          { name: "React", level: 90 },
+          { name: "Node.js", level: 85 },
+          { name: "TypeScript", level: 80 },
+          { name: "AWS", level: 75 },
+          { name: "MongoDB", level: 70 },
+          { name: "GraphQL", level: 65 },
         ],
         experience: [
           {
-            title: 'Senior Software Engineer',
-            company: 'TechCorp Inc.',
-            duration: '2021 - Present',
-            description: 'Led development of microservices architecture serving 10M+ users.'
+            title: "Senior Software Engineer",
+            company: "TechCorp Inc.",
+            duration: "2021 - Present",
+            description:
+              "Led development of microservices architecture serving 10M+ users.",
           },
           {
-            title: 'Full Stack Developer',
-            company: 'StartupX',
-            duration: '2018 - 2021',
-            description: 'Built and maintained React applications with Node.js backend.'
-          }
+            title: "Full Stack Developer",
+            company: "StartupX",
+            duration: "2018 - 2021",
+            description:
+              "Built and maintained React applications with Node.js backend.",
+          },
         ],
         education: [
           {
-            degree: 'M.S. Computer Science',
-            institution: 'Stanford University',
-            year: '2018'
-          }
+            degree: "M.S. Computer Science",
+            institution: "Stanford University",
+            year: "2018",
+          },
         ],
         missingKeywords: [
-          'Cloud Architecture',
-          'Microservices',
-          'Docker',
-          'Kubernetes',
-          'Redis'
+          "Cloud Architecture",
+          "Microservices",
+          "Docker",
+          "Kubernetes",
+          "Redis",
         ],
         atsScore: 85,
         suggestions: [
           'Add more quantifiable achievements (e.g., "Increased performance by 40%")',
-          'Include specific technologies with versions (React 18, Node.js 18)',
-          'Add links to live projects or portfolio',
-          'Highlight leadership and mentoring experience',
-          'Include relevant certifications'
+          "Include specific technologies with versions (React 18, Node.js 18)",
+          "Add links to live projects or portfolio",
+          "Highlight leadership and mentoring experience",
+          "Include relevant certifications",
         ],
         overallScore: 82,
       });
       setAnalyzing(false);
-      toast.success('AI Analysis complete!');
+      toast.success("AI Analysis complete!");
     }, 3000);
   };
 
-  const handleDownloadReport = () => {
-    if (!analysis) return;
-    
-    // Create report content
-    const reportContent = `
-      📊 RESUME ANALYSIS REPORT
-      =========================
-      
-      Overall Score: ${analysis.overallScore}%
-      ATS Score: ${analysis.atsScore}%
-      
-      📝 SUMMARY
-      ${analysis.summary}
-      
-      🛠️ SKILLS DETECTED
-      ${analysis.skills?.map(s => `  - ${s.name}: ${s.level}%`).join('\n') || 'N/A'}
-      
-      💼 EXPERIENCE
-      ${analysis.experience?.map(e => `  - ${e.title} at ${e.company} (${e.duration})`).join('\n') || 'N/A'}
-      
-      🎓 EDUCATION
-      ${analysis.education?.map(e => `  - ${e.degree} from ${e.institution} (${e.year})`).join('\n') || 'N/A'}
-      
-      🔑 MISSING KEYWORDS
-      ${analysis.missingKeywords?.map(k => `  - ${k}`).join('\n') || 'N/A'}
-      
-      💡 SUGGESTIONS FOR IMPROVEMENT
-      ${analysis.suggestions?.map(s => `  - ${s}`).join('\n') || 'N/A'}
-      
-      Generated by CareerPilot AI
-      ${new Date().toLocaleString()}
-    `;
+const handleDownloadReport = async () => {
+  if (!resumeId) {
+    toast.error('No resume to generate a report for');
+    return;
+  }
 
-    // Create and download file
-    const blob = new Blob([reportContent], { type: 'text/plain' });
+  try {
+    const response = await fetch(`http://localhost:5000/api/resume/${resumeId}/report`, {
+      headers: {
+        Authorization: `Bearer ${session?.user?.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to generate report');
+    }
+
+    const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Resume_Analysis_Report_${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `Resume_Analysis_Report_${new Date().toISOString().split('T')[0]}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Report downloaded!');
-  };
-
+  } catch (error) {
+    console.error('Download report error:', error);
+    toast.error(error.message || 'Could not download report');
+  }
+};
   // Loading state
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <div className="container-custom py-8">
         <div className="animate-pulse">
@@ -241,9 +239,12 @@ const handleUploadAndAnalyze = async (selectedFile) => {
             <FaRobot className="text-2xl text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">AI Document Intelligence</h1>
+            <h1 className="text-3xl font-bold text-gray-800">
+              AI Document Intelligence
+            </h1>
             <p className="text-gray-600">
-              Upload your resume for AI-powered analysis, scoring, and improvement suggestions
+              Upload your resume for AI-powered analysis, scoring, and
+              improvement suggestions
             </p>
           </div>
         </div>
@@ -293,8 +294,12 @@ const handleUploadAndAnalyze = async (selectedFile) => {
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">Upload Resume</h2>
-            <p className="text-sm text-gray-500">Upload your PDF resume for AI analysis</p>
+            <h2 className="text-lg font-semibold text-gray-800">
+              Upload Resume
+            </h2>
+            <p className="text-sm text-gray-500">
+              Upload your PDF resume for AI analysis
+            </p>
           </div>
           {uploadedFile && (
             <span className="text-sm text-green-600 flex items-center gap-1">
@@ -313,19 +318,23 @@ const handleUploadAndAnalyze = async (selectedFile) => {
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             disabled={uploading || analyzing}
           />
-          <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-            uploading || analyzing 
-              ? 'border-gray-300 bg-gray-50' 
-              : 'border-primary-300 hover:border-primary-500 hover:bg-primary-50'
-          }`}>
+          <div
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+              uploading || analyzing
+                ? "border-gray-300 bg-gray-50"
+                : "border-primary-300 hover:border-primary-500 hover:bg-primary-50"
+            }`}
+          >
             {uploading || analyzing ? (
               <div className="flex flex-col items-center">
                 <FaSpinner className="text-4xl text-primary-600 animate-spin mb-3" />
                 <p className="text-gray-600 font-medium">
-                  {uploading ? 'Uploading your resume...' : 'AI is analyzing your resume...'}
+                  {uploading
+                    ? "Uploading your resume..."
+                    : "AI is analyzing your resume..."}
                 </p>
                 <p className="text-sm text-gray-400">
-                  {uploading ? 'Please wait...' : 'This may take a few moments'}
+                  {uploading ? "Please wait..." : "This may take a few moments"}
                 </p>
               </div>
             ) : uploadedFile ? (
@@ -343,7 +352,9 @@ const handleUploadAndAnalyze = async (selectedFile) => {
             ) : (
               <div className="flex flex-col items-center">
                 <FaUpload className="text-4xl text-primary-400 mb-3" />
-                <p className="text-gray-600 font-medium">Drag & drop your resume here</p>
+                <p className="text-gray-600 font-medium">
+                  Drag & drop your resume here
+                </p>
                 <p className="text-sm text-gray-400">or click to browse</p>
                 <p className="text-xs text-gray-400 mt-2">PDF only • Max 5MB</p>
               </div>
@@ -385,8 +396,12 @@ const handleUploadAndAnalyze = async (selectedFile) => {
               <FaRobot className="absolute inset-0 m-auto text-3xl text-primary-600" />
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mt-4">AI is analyzing your resume...</h3>
-          <p className="text-gray-500">Extracting text, detecting skills, and calculating ATS score</p>
+          <h3 className="text-lg font-semibold text-gray-800 mt-4">
+            AI is analyzing your resume...
+          </h3>
+          <p className="text-gray-500">
+            Extracting text, detecting skills, and calculating ATS score
+          </p>
           <div className="mt-4 flex justify-center gap-4 text-sm text-gray-400">
             <span className="flex items-center gap-1">
               <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"></div>
@@ -413,18 +428,24 @@ const handleUploadAndAnalyze = async (selectedFile) => {
               <div className="relative">
                 <div className="w-32 h-32 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
                   <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-gray-800">{analysis.overallScore}%</span>
+                    <span className="text-3xl font-bold text-gray-800">
+                      {analysis.overallScore}%
+                    </span>
                     <span className="text-xs text-gray-500">Overall Score</span>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   {renderStars(analysis.overallScore)}
-                  <span className="text-sm text-gray-500">({analysis.overallScore}/100)</span>
+                  <span className="text-sm text-gray-500">
+                    ({analysis.overallScore}/100)
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Resume Analysis Complete</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Resume Analysis Complete
+                </h3>
                 <p className="text-gray-600">{analysis.summary}</p>
               </div>
 
@@ -461,7 +482,9 @@ const handleUploadAndAnalyze = async (selectedFile) => {
           {/* Skills */}
           {analysis.skills && analysis.skills.length > 0 && (
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-              <h3 className="font-semibold text-gray-800 mb-4">🛠️ Skills Detected</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">
+                🛠️ Skills Detected
+              </h3>
               <div className="space-y-3">
                 {analysis.skills.map((skill, index) => (
                   <div key={index}>
@@ -470,8 +493,8 @@ const handleUploadAndAnalyze = async (selectedFile) => {
                       <span className="text-gray-500">{skill.level}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000" 
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000"
                         style={{ width: `${skill.level}%` }}
                       ></div>
                     </div>
@@ -484,14 +507,21 @@ const handleUploadAndAnalyze = async (selectedFile) => {
           {/* Experience */}
           {analysis.experience && analysis.experience.length > 0 && (
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-              <h3 className="font-semibold text-gray-800 mb-4">💼 Experience</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">
+                💼 Experience
+              </h3>
               <div className="space-y-4">
                 {analysis.experience.map((exp, index) => (
-                  <div key={index} className="border-l-4 border-primary-500 pl-4">
+                  <div
+                    key={index}
+                    className="border-l-4 border-primary-500 pl-4"
+                  >
                     <h4 className="font-medium text-gray-800">{exp.title}</h4>
                     <p className="text-sm text-gray-600">{exp.company}</p>
                     <p className="text-xs text-gray-400">{exp.duration}</p>
-                    <p className="text-sm text-gray-600 mt-1">{exp.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {exp.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -501,10 +531,12 @@ const handleUploadAndAnalyze = async (selectedFile) => {
           {/* Missing Keywords */}
           {analysis.missingKeywords && analysis.missingKeywords.length > 0 && (
             <div className="bg-yellow-50 rounded-xl shadow-md border border-yellow-200 p-6">
-              <h3 className="font-semibold text-yellow-800 mb-3">🔑 Missing Keywords</h3>
+              <h3 className="font-semibold text-yellow-800 mb-3">
+                🔑 Missing Keywords
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {analysis.missingKeywords.map((keyword, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
                   >
@@ -521,10 +553,15 @@ const handleUploadAndAnalyze = async (selectedFile) => {
           {/* Suggestions */}
           {analysis.suggestions && analysis.suggestions.length > 0 && (
             <div className="bg-primary-50 rounded-xl shadow-md border border-primary-200 p-6">
-              <h3 className="font-semibold text-primary-800 mb-3">💡 Suggestions for Improvement</h3>
+              <h3 className="font-semibold text-primary-800 mb-3">
+                💡 Suggestions for Improvement
+              </h3>
               <ul className="space-y-2">
                 {analysis.suggestions.map((suggestion, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-primary-700">
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-primary-700"
+                  >
                     <span className="text-primary-500 mt-1">•</span>
                     <span>{suggestion}</span>
                   </li>
@@ -541,10 +578,12 @@ const handleUploadAndAnalyze = async (selectedFile) => {
                 {analysis.education.map((edu, index) => (
                   <div key={index} className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">
-                      {edu.institution?.charAt(0) || '?'}
+                      {edu.institution?.charAt(0) || "?"}
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-800">{edu.degree}</h4>
+                      <h4 className="font-medium text-gray-800">
+                        {edu.degree}
+                      </h4>
                       <p className="text-sm text-gray-600">{edu.institution}</p>
                       <p className="text-xs text-gray-400">{edu.year}</p>
                     </div>
@@ -562,16 +601,18 @@ const handleUploadAndAnalyze = async (selectedFile) => {
 // Helper Components
 const FeatureCard = ({ icon, label, description, color }) => {
   const colors = {
-    blue: 'bg-blue-50 border-blue-200',
-    yellow: 'bg-yellow-50 border-yellow-200',
-    purple: 'bg-purple-50 border-purple-200',
-    green: 'bg-green-50 border-green-200',
-    pink: 'bg-pink-50 border-pink-200',
-    indigo: 'bg-indigo-50 border-indigo-200',
+    blue: "bg-blue-50 border-blue-200",
+    yellow: "bg-yellow-50 border-yellow-200",
+    purple: "bg-purple-50 border-purple-200",
+    green: "bg-green-50 border-green-200",
+    pink: "bg-pink-50 border-pink-200",
+    indigo: "bg-indigo-50 border-indigo-200",
   };
 
   return (
-    <div className={`p-4 rounded-xl border ${colors[color] || 'bg-gray-50 border-gray-200'} text-center hover:shadow-md transition`}>
+    <div
+      className={`p-4 rounded-xl border ${colors[color] || "bg-gray-50 border-gray-200"} text-center hover:shadow-md transition`}
+    >
       <div className="text-2xl mb-1">{icon}</div>
       <h4 className="font-semibold text-sm text-gray-800">{label}</h4>
       <p className="text-xs text-gray-500 mt-0.5">{description}</p>
@@ -581,21 +622,23 @@ const FeatureCard = ({ icon, label, description, color }) => {
 
 const StatBox = ({ label, value, color, progress }) => {
   const colors = {
-    green: 'text-green-600 bg-green-50',
-    blue: 'text-blue-600 bg-blue-50',
-    purple: 'text-purple-600 bg-purple-50',
+    green: "text-green-600 bg-green-50",
+    blue: "text-blue-600 bg-blue-50",
+    purple: "text-purple-600 bg-purple-50",
   };
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md border border-gray-100 text-center">
       <p className="text-sm text-gray-500">{label}</p>
-      <p className={`text-2xl font-bold ${colors[color]?.split(' ')[0] || 'text-gray-800'}`}>
+      <p
+        className={`text-2xl font-bold ${colors[color]?.split(" ")[0] || "text-gray-800"}`}
+      >
         {value}
       </p>
       {progress !== undefined && (
         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-          <div 
-            className="bg-green-500 h-1.5 rounded-full transition-all duration-1000" 
+          <div
+            className="bg-green-500 h-1.5 rounded-full transition-all duration-1000"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
@@ -607,7 +650,7 @@ const StatBox = ({ label, value, color, progress }) => {
 const renderStars = (score) => {
   const stars = [];
   const filledStars = Math.floor(score / 20);
-  const hasHalf = (score % 20) >= 10;
+  const hasHalf = score % 20 >= 10;
 
   for (let i = 0; i < 5; i++) {
     if (i < filledStars) {
