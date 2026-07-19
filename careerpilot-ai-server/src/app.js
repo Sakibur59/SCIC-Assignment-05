@@ -7,6 +7,7 @@ const User = require('./models/User');
 const Resume = require('./models/Resume');
 const SavedJob = require('./models/SavedJob');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/saved-jobs', savedJobRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

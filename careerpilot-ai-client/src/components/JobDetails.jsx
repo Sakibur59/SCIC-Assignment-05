@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -15,6 +15,7 @@ import {
   FaSpinner,
   FaTimes,
   FaArrowRight,
+  FaUserCheck,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import ResumeMatchWidget from "./ResumeMatchWidget";
@@ -28,8 +29,36 @@ const JobDetails = ({ job }) => {
   const [coverLetter, setCoverLetter] = useState("");
   const [selectedResume, setSelectedResume] = useState("");
   const [userResumes, setUserResumes] = useState([]);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [checkingApplied, setCheckingApplied] = useState(true);
 
   if (!job) return null;
+
+  // Check if user already applied
+  useEffect(() => {
+    if (session?.user) {
+      checkIfApplied();
+    }
+  }, [session, job.id]);
+
+  const checkIfApplied = async () => {
+    if (!session) return;
+    
+    try {
+      setCheckingApplied(true);
+      const response = await fetch(`/api/applications/check?jobId=${job.id}`, {
+        headers: {
+          Authorization: `Bearer ${session.user.token}`,
+        },
+      });
+      const data = await response.json();
+      setHasApplied(data.applied || false);
+    } catch (error) {
+      console.error("Error checking application:", error);
+    } finally {
+      setCheckingApplied(false);
+    }
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -72,6 +101,12 @@ const JobDetails = ({ job }) => {
       toast.error("Please login to apply for this job");
       return;
     }
+    
+    if (hasApplied) {
+      toast.error("You have already applied for this job");
+      return;
+    }
+    
     setShowApplyModal(true);
     fetchUserResumes();
     setApplicationStatus(null);
@@ -92,25 +127,37 @@ const JobDetails = ({ job }) => {
     setApplying(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.user.token}`,
+        },
+        body: JSON.stringify({
+          jobId: job.id,
+          jobData: {
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            salary: job.salary,
+            type: job.type,
+            companyLogo: job.companyLogo,
+          },
+          resumeId: selectedResume,
+          coverLetter: coverLetter,
+        }),
+      });
 
-      // In production, send to backend
-      // const response = await fetch("/api/jobs/apply", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     Authorization: `Bearer ${session.user.token}`,
-      //   },
-      //   body: JSON.stringify({
-      //     jobId: job.id,
-      //     resumeId: selectedResume,
-      //     coverLetter: coverLetter,
-      //   }),
-      // });
+      const data = await response.json();
 
-      setApplicationStatus("success");
-      toast.success("Application submitted successfully!");
+      if (response.ok) {
+        setApplicationStatus("success");
+        setHasApplied(true);
+        toast.success("Application submitted successfully!");
+      } else {
+        toast.error(data.message || "Failed to submit application");
+        setApplicationStatus("error");
+      }
     } catch (error) {
       console.error("Application error:", error);
       setApplicationStatus("error");
@@ -172,19 +219,38 @@ const JobDetails = ({ job }) => {
             </div>
           </div>
 
-          <button
-            onClick={handleOpenApplyModal}
-            className="bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-primary-600/20 hover:shadow-xl hover:scale-105 transition-all duration-300"
-          >
-            Apply Now
-            <FaArrowRight className="text-sm" />
-          </button>
+          {/* Apply Button - Shows Applied if already applied */}
+          {checkingApplied ? (
+            <button
+              disabled
+              className="px-8 py-3 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed flex items-center gap-2"
+            >
+              <FaSpinner className="animate-spin" />
+              Checking...
+            </button>
+          ) : hasApplied ? (
+            <button
+              disabled
+              className="bg-green-500 text-white px-8 py-3 rounded-lg flex items-center gap-2 cursor-default"
+            >
+              <FaUserCheck />
+              Applied
+            </button>
+          ) : (
+            <button
+              onClick={handleOpenApplyModal}
+              className="bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-primary-600/20 hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              Apply Now
+              <FaArrowRight className="text-sm" />
+            </button>
+          )}
         </div>
       </div>
 
       <ResumeMatchWidget job={job} />
 
-      {/* Tabs */}
+      {/* Tabs - Same as before */}
       <div className="bg-white rounded-xl shadow-md border border-gray-100">
         <div className="border-b border-gray-200">
           <div className="flex gap-1 p-4">
@@ -205,7 +271,7 @@ const JobDetails = ({ job }) => {
         </div>
 
         <div className="p-6">
-          {/* Overview Tab - Same as before */}
+          {/* Overview Tab */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               <div>
@@ -273,7 +339,7 @@ const JobDetails = ({ job }) => {
             </div>
           )}
 
-          {/* Company Tab - Same as before */}
+          {/* Company Tab */}
           {activeTab === "company" && (
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-900">
@@ -329,7 +395,7 @@ const JobDetails = ({ job }) => {
             </div>
           )}
 
-          {/* Reviews Tab - Same as before */}
+          {/* Reviews Tab */}
           {activeTab === "reviews" && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -381,18 +447,15 @@ const JobDetails = ({ job }) => {
         </div>
       </div>
 
-      {/* ========== APPLY MODAL ========== */}
+      {/* Apply Modal */}
       {showApplyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={handleCloseApplyModal}
           ></div>
 
-          {/* Modal Content */}
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fade-in-up max-h-[90vh] overflow-y-auto">
-            {/* Close Button */}
             <button
               onClick={handleCloseApplyModal}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
@@ -400,7 +463,6 @@ const JobDetails = ({ job }) => {
               <FaTimes className="text-xl" />
             </button>
 
-            {/* Success State */}
             {applicationStatus === "success" ? (
               <div className="text-center py-8">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -414,8 +476,7 @@ const JobDetails = ({ job }) => {
                   <strong>{job.title}</strong> at {job.company}.
                 </p>
                 <p className="text-sm text-gray-500 mb-6">
-                  The company will review your application and get back to you
-                  soon.
+                  The company will review your application and get back to you soon.
                 </p>
                 <button
                   onClick={handleCloseApplyModal}
@@ -426,7 +487,6 @@ const JobDetails = ({ job }) => {
               </div>
             ) : (
               <>
-                {/* Header */}
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
                     <FaBuilding className="text-2xl text-primary-600" />
@@ -439,9 +499,7 @@ const JobDetails = ({ job }) => {
                   </p>
                 </div>
 
-                {/* Application Form */}
                 <div className="space-y-4">
-                  {/* Select Resume */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Select Resume *
@@ -473,7 +531,6 @@ const JobDetails = ({ job }) => {
                     )}
                   </div>
 
-                  {/* Cover Letter */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Cover Letter (Optional)
@@ -487,26 +544,21 @@ const JobDetails = ({ job }) => {
                     />
                   </div>
 
-                  {/* Job Summary */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Position:</span>{" "}
-                      {job.title}
+                      <span className="font-semibold">Position:</span> {job.title}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Company:</span>{" "}
-                      {job.company}
+                      <span className="font-semibold">Company:</span> {job.company}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Location:</span>{" "}
-                      {job.location}
+                      <span className="font-semibold">Location:</span> {job.location}
                     </p>
                     <p className="text-sm text-gray-600">
                       <span className="font-semibold">Salary:</span> {job.salary}
                     </p>
                   </div>
 
-                  {/* Submit Buttons */}
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={handleCloseApplyModal}
@@ -539,7 +591,6 @@ const JobDetails = ({ job }) => {
         </div>
       )}
 
-      {/* Modal Animation */}
       <style jsx>{`
         @keyframes fadeInUp {
           from {
