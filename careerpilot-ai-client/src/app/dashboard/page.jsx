@@ -117,7 +117,7 @@ export default function DashboardPage() {
                 You haven't analyzed a resume yet.
               </p>
               <Link
-                href="/dashboard/add-resume"
+                href="/ai-document"
                 className="text-primary-600 font-medium text-sm hover:underline"
               >
                 Upload your first resume →
